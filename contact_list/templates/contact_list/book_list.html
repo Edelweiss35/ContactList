@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html ng-app="myfirstmean">
+
+<head>
+  <meta charset="UTF-8">
+  <title>MEAN Stack CRUD</title>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+
+</head>
+<body>
+  <div class="container">
+    <div class="row">
+      <div class="col-xs-12">
+        <h1>Contact List <small>by: Sajitha Liyanage</small></h1>
+        <hr/>
+        <table class="table table-striped" style="margin-top:30px;">
+          <thead>
+            <tr>
+              <th style="text-align:center;">Name</th>
+              <th style="text-align:center;">Email</th>
+              <th style="text-align:center;">PhoneNumber</th>
+              <th style="text-align:center;">Actions</th>
+            </tr>
+          </thead>
+          <tbody ng-controller="addcontrolle">
+            <tr>
+                <td>
+                  <div class="form-group">
+                    <input type="text" placeholder="Enter Name" class="form-control" ng-model="contact.name">
+                  </div>
+                </td>
+                <td>
+                  <div class="form-group">
+                    <input type="text" placeholder="Enter Email" class="form-control" ng-model="contact.e_mail">
+                  </div>
+                </td>
+                <td>
+                  <div class="form-group">
+                    <input type="text" placeholder="Enter PhoneNumber" class="form-control" ng-model="contact.phone_number">
+                  </div>
+                </td>
+                <td>
+                  <center>
+                      <button class="btn btn-warning" ng-click="addData()">Create Contact</button>
+                  </center>
+                </td>
+                <td>
+                  <center>
+                      <button class="btn btn-info" ng-click="edit()">Update Contact</button>
+                  </center>
+                </td>
+            </tr>
+             {% verbatim %}
+            <tr ng-repeat="contact in contactlist track by $index">
+              <td style="text-align:center;">{{contact.fields.name}}</td>
+              <td style="text-align:center;">{{contact.fields.e_mail}}</td>
+              <td style="text-align:center;">{{contact.fields.phone_number}}</td>
+              <td  style="text-align:center;">
+                <center>
+                  <button type="button" class="btn btn-danger" ng-click="remove(contact.pk)">Delete</button>
+                </center>
+              </td>
+              <td  style="text-align:center;">
+                <center>
+                  <button type="button" class="btn btn-success" ng-click="update(contact.pk)">Update</button>
+                </center>
+              </td>
+            </tr>
+             {% endverbatim %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+    <script  type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.2/angular.js"></script>
+    <script type="text/javascript" src="https://code.jquery.com/jquery-3.1.1.js"></script>
+    <script type="text/javascript" src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script type="text/javascript">
+        var CSRF_verification_str = '{{ csrf_token|escapejs }}';
+        var app = angular.module('myfirstmean',[]);
+        app.config(['$httpProvider', function($httpProvider) {
+            $httpProvider.defaults.headers.common['X-CSRFToken'] = CSRF_verification_str;
+        }]);
+        app.controller('addcontrolle',function($scope,$http){
+
+          var refresh = function(){
+            $http.get('/contact_list/contactlists').then(function(response){
+              $scope.contactlist =  JSON.parse(response.data);
+              console.log($scope.contactlist);
+              $scope.contact.name = '';
+              $scope.contact.e_mail = '';
+              $scope.contact.phone_number = '';
+            });
+          };
+
+         refresh();
+          //
+          $scope.addData = function(){
+            $http.post("/contact_list/contactlists_add",$scope.contact).then(function(response){
+                refresh();
+            })
+          };
+
+          $scope.remove = function(id){
+              console.log(id);
+            $http.post('/contact_list/contactlists_delete', {id: id}).then(function(response){
+                refresh();
+            })
+          };
+
+          $scope.edit = function(){
+            $http.post('/contact_list/contactlists_update', {id:$scope.contact_id, user: $scope.contact}).then(function(response){
+                refresh();
+            });
+          };
+
+          $scope.update = function(id){
+            $http.post('/contact_list/contactlists_get' ,{id: id}).then(function(response){
+                var json_data = JSON.parse(response.data).pop();
+                $scope.contact= json_data.fields;
+                $scope.contact_id = json_data.pk;
+            });
+          };
+
+        });
+
+    </script>
+  </body>
+
+  </html>
